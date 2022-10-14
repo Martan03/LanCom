@@ -7,6 +7,8 @@ public class SocketListener
 {
     public static int Main(string[] args)
     {
+        if (args.Length == 0)
+            return -1;
         switch (args[0])
         {
             case "server":
@@ -23,9 +25,9 @@ public class SocketListener
 
     public static void StartServer()
     {
-        IPHostEntry host = Dns.GetHostEntry("localhost");
+        IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
         IPAddress ipAddress = host.AddressList[0];
-        IPEndPoint localEndPoint = new (ipAddress, 11000);
+        IPEndPoint localEndPoint = new (IPAddress.Any, 11000);
 
         try
         {
@@ -71,10 +73,9 @@ public class SocketListener
         try
         {
             IPHostEntry host = Dns.GetHostEntry("localhost");
-            IPAddress ipAddress = host.AddressList[0];
-            IPEndPoint remoteEP = new(ipAddress, 11000);
+            IPEndPoint remoteEP = new(IPAddress.Parse("78.80.81.10"), 11000);
 
-            Socket sender = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            Socket sender = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
             try
             {
