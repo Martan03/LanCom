@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LanCom;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -7,49 +8,36 @@ public class SocketListener
 {
     public static int Main(string[] args)
     {
-        if (args.Length == 0)
-            return -1;
-        switch (args[0])
-        {
-            case "server":
-                StartServer();
-                break;
-            case "client":
-                StartClient();
-                break;
-            default:
-                break;
-        }
+        StartCom(args);
+
         return 0;
     }
 
-    public static void StartServer()
+    private static void StartCom(string[] args)
     {
-        IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
-        IPAddress ipAddress = ipHostInfo.AddressList[0];
-        IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 10897);
-        Console.WriteLine("Server Start");
-
-        Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        listener.Bind(localEndPoint);
-        listener.Listen(10);
-
-        while (true)
+        if (args.Length == 0)
         {
-            Console.WriteLine("Waiting for a connection...");
-            Socket handler = listener.Accept();
-
-            Console.WriteLine(handler.RemoteEndPoint);
-
-            handler.Shutdown(SocketShutdown.Both);
-            handler.Close();
+            Help();
+            return;
+        }
+        switch(args[0])
+        {
+            case "receive":
+                Server server = new();
+                server.RunServer();
+                break;
+            case "send":
+                Client client = new("192.168.1.12");
+                client.RunClient();
+                break;
+            default:
+                Console.WriteLine("Invalid usage. Type lancom help for help!");
+                break;
         }
     }
 
-    public static void StartClient()
+    private static void Help()
     {
-        IPEndPoint ip = new IPEndPoint(IPAddress.Parse("MY IP HERE"), 10897);
-        Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        server.Connect(ip);
+        Console.WriteLine("Not implemented yet");
     }
 }
