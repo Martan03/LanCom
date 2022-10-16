@@ -20,17 +20,6 @@ namespace LanCom
             this.args = args;
         }
 
-        public void RunClient()
-        {
-            StartClient();
-            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
-
-            SelectOption();
-
-            sender.Shutdown(SocketShutdown.Both);
-            sender.Close();
-        }
-
         private void StartClient(int port = 11000)
         {
             IPEndPoint remEP = new(IPAddress.Parse(ip), port);
@@ -38,7 +27,7 @@ namespace LanCom
             sender.Connect(remEP);
         }
 
-        private void SelectOption()
+        private void RunClient()
         {
             if (args.Length < 2)
             {
@@ -54,6 +43,9 @@ namespace LanCom
                 case "file":
                     SendFile(args[1]);
                     break;
+                case "dir":
+                    SendDir(args[1]);
+                    break;
                 default:
                     break;
             }
@@ -61,18 +53,36 @@ namespace LanCom
 
         private void SendText(string msg)
         {
+            StartClient();
+            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
+
             sender.Send(Encoding.ASCII.GetBytes("0<EOF>"));
 
             byte[] msgBytes = Encoding.ASCII.GetBytes(msg + "<EOF>");
             int bytesSent = sender.Send(msgBytes);
+
+            sender.Shutdown(SocketShutdown.Both);
+            sender.Close();
         }
 
         private void SendFile(string path)
         {
-            string filename = path.Split("/").Last();
+            StartClient();
+            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
 
+            _SendFile(path, Path.GetFileName(path));
+
+            sender.Shutdown(SocketShutdown.Both);
+            sender.Close();
+        }
+
+        private void _SendFile(string path, string relPath)
+        {
             if (!File.Exists(path))
-                throw new Exception("File doesn't exist or is unreachable");
+            {
+                Console.WriteLine("File not found: {0}", path);
+                return;
+            }
 
             sender.Send(Encoding.ASCII.GetBytes("1" + path + "<EOF>"));
 
@@ -87,6 +97,11 @@ namespace LanCom
             }
 
             file.Close();
+        }
+
+        private void SendDir(string path)
+        {
+            return;
         }
     }
 }
