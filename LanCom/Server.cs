@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace LanCom
 {
@@ -54,7 +55,11 @@ namespace LanCom
         {
             string startCom = ReceiveText();
             char option = startCom[0];
-            startCom = startCom.Substring(1);
+
+            startCom = startCom.Substring(startCom.IndexOf(":") + 1);
+            int repeats = Int32.Parse(startCom.Substring(0, startCom.IndexOf(":")));
+
+            startCom = startCom.Split(":").Last();
 
             switch (option)
             {
@@ -69,6 +74,13 @@ namespace LanCom
                     Listener.Shutdown(SocketShutdown.Both);
                     Listener.Close();
                     break;
+            }
+
+            if (repeats <= 1)
+            {
+                Handler.Close();
+                Listener.Shutdown(SocketShutdown.Both);
+                Listener.Close();
             }
         }
 

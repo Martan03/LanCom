@@ -14,11 +14,13 @@ namespace LanCom
         private string ip { get; set; }
         private string[] args { get; set; }
         private Socket sender { get; set; }
+        private int sendNum { get; set; }
 
         public Client(string[] args, string ip)
         {
             this.ip = ip;
             this.args = args;
+            this.sendNum = 1;
         }
 
         private void StartClient(int port = 11000)
@@ -57,7 +59,8 @@ namespace LanCom
             StartClient();
             Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
 
-            sender.Send(Encoding.ASCII.GetBytes("0<EOF>"));
+            sender.Send(Encoding.ASCII.GetBytes("0:" + sendNum + ":<EOF>"));
+            sendNum--;
 
             byte[] msgBytes = Encoding.ASCII.GetBytes(msg + "<EOF>");
             int bytesSent = sender.Send(msgBytes);
@@ -85,7 +88,8 @@ namespace LanCom
                 return;
             }
 
-            sender.Send(Encoding.ASCII.GetBytes("1" + relPath + "<EOF>"));
+            sender.Send(Encoding.ASCII.GetBytes("1:" + sendNum + ":" + relPath + "<EOF>"));
+            sendNum--;
 
             FileStream file = new FileStream(path, FileMode.Open);
             byte[] fileChunk = new byte[1024];
@@ -107,6 +111,8 @@ namespace LanCom
                 Console.WriteLine("Directory not found: {0}", path);
                 return;
             }
+
+            sendNum = CountFiles(path, 0);
 
             string dir = Path.GetFullPath(Path.Combine(path, @"../"));
             ProcessDir(dir, path);
@@ -131,6 +137,17 @@ namespace LanCom
 
             sender.Shutdown(SocketShutdown.Both);
             sender.Close();
+        }
+
+        private int CountFiles(string path, int n)
+        {
+            string[] dirs = Directory.GetDirectories(path);
+            foreach (string dir in dirs)
+                n += CountFiles(dir, n);
+
+            n += Directory.GetFiles(path).Length;
+
+            return n;
         }
     }
 }
