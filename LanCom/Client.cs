@@ -55,7 +55,7 @@ namespace LanCom
                     SendFile(args[1]);
                     break;
                 case "dir":
-                    SendDir("D:\\Music");
+                    SendDir(args[1]);
                     break;
                 default:
                     break;
@@ -80,6 +80,7 @@ namespace LanCom
 
         private void _SendFile(string path, string relPath)
         {
+            Thread.Sleep(100);
             sender.Send(Encoding.ASCII.GetBytes("1" + relPath + "<EOF>"));
 
             FileStream file = new FileStream(path, FileMode.Open);
@@ -103,7 +104,10 @@ namespace LanCom
                 return;
             }
 
+            sender.Send(Encoding.ASCII.GetBytes("2<EOF>"));
+
             string dir = Path.GetFullPath(Path.Combine(path, @"../"));
+
             ProcessDir(dir, path);
         }
 

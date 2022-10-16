@@ -105,12 +105,17 @@ namespace LanCom
 
         private void ReceiveDir()
         {
-            string fileInfo, dir;
+            string fileInfo;
             while (true)
             {
                 fileInfo = ReceiveText().Substring(1);
-                dir = fileInfo.Replace(Path.GetFileName(fileInfo), "");
-                Directory.CreateDirectory(dir);
+
+                if (fileInfo == "")
+                    break;
+
+                FileInfo file = new(fileInfo);
+                file.Directory.Create();
+
                 ReceiveFile(fileInfo);
             }
         }
