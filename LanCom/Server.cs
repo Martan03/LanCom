@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 
 namespace LanCom
@@ -30,7 +31,7 @@ namespace LanCom
             Console.WriteLine("Server started");
 
             Handler = Listener.Accept();
-            ReceiveFile();
+            SelectOption();
 
             Handler.Shutdown(SocketShutdown.Both);
             Handler.Close();
@@ -45,7 +46,26 @@ namespace LanCom
             Listener.Listen(10);
         }
 
-        private void ReceiveText()
+        private void SelectOption()
+        {
+            string startCom = ReceiveText();
+            char option = startCom[0];
+            startCom.Replace("<EOF>", "").Substring(1);
+
+            switch (option)
+            {
+                case '0':
+                    Console.WriteLine("Received text: {0}", ReceiveText());
+                    break;
+                case '1':
+                    ReceiveFile(startCom);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private string ReceiveText()
         {
             string data = null;
             byte[] bytes = null;
@@ -61,18 +81,18 @@ namespace LanCom
                     break;
                 }
             }
-            Console.WriteLine("Text received: {0}", data);
+            return data;
         }
 
-        private void ReceiveFile()
+        private void ReceiveFile(string filename, string dir = "")
         {
             byte[] fileBytes = new byte[1024];
-            BinaryWriter bWrite = new(File.Open("test.txt", FileMode.Append));
-            int bytesRec = 1;
+            int bytesRec;
 
-            while (bytesRec != 0)
+            BinaryWriter bWrite = new(File.Open(dir + filename, FileMode.Append));
+
+            while((bytesRec = Handler.Receive(fileBytes)) > 0)
             {
-                bytesRec = Handler.Receive(fileBytes);
                 bWrite.Write(fileBytes);
             }
 

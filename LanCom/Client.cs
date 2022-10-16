@@ -11,11 +11,13 @@ namespace LanCom
     internal class Client
     {
         private string ip { get; set; }
+        private string[] args { get; set; }
         private Socket sender { get; set; }
 
-        public Client(string ip)
+        public Client(string[] args, string ip)
         {
             this.ip = ip;
+            this.args = args;
         }
 
         public void RunClient()
@@ -23,7 +25,7 @@ namespace LanCom
             StartClient();
             Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
 
-            SendFile("test.txt");
+            SelectOption();
 
             sender.Shutdown(SocketShutdown.Both);
             sender.Close();
@@ -36,16 +38,44 @@ namespace LanCom
             sender.Connect(remEP);
         }
 
+        private void SelectOption()
+        {
+            switch (args[0])
+            {
+                case "text":
+                    SendText("This is a test of connection");
+                    break;
+                case "file":
+                    SendFile("test.txt");
+                    break;
+                default:
+                    break;
+            }
+        }
+
         private void SendText(string msg)
         {
+            sender.Send(Encoding.ASCII.GetBytes("0<EOF>"));
+
             byte[] msgBytes = Encoding.ASCII.GetBytes(msg + "<EOF>");
             int bytesSent = sender.Send(msgBytes);
         }
 
-        private void SendFile(string filename)
+        private void SendFile(string path)
         {
-            byte[] fileBytes = File.ReadAllBytes(filename);
-            sender.Send(fileBytes);
+            sender.Send(Encoding.ASCII.GetBytes("1" + path + "<EOF>"));
+
+            FileStream file = new FileStream(path, FileMode.Open);
+            byte[] fileChunk = new byte[1024];
+            int bytesCount;
+
+            while((bytesCount = file.Read(fileChunk, 0, 1024)) > 0)
+            {
+                if (sender.Send(fileChunk, bytesCount, SocketFlags.None) != bytesCount)
+                    throw new Exception("Error in sending the file");
+            }
+
+            file.Close();
         }
     }
 }

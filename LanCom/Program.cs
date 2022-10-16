@@ -27,7 +27,7 @@ public class SocketListener
                 server.RunServer();
                 break;
             case "send":
-                Client client = new("192.168.1.12");
+                Client client = new(args.Skip(1).ToArray(), "192.168.1.12");
                 client.RunClient();
                 break;
             default:
