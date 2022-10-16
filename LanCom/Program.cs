@@ -31,7 +31,7 @@ public class SocketListener
                 client.RunClient();
                 break;
             default:
-                Console.WriteLine("Invalid usage. Type lancom help for help!");
+                Console.WriteLine("Invalid usage, type: LanCom help to show help!");
                 break;
         }
     }

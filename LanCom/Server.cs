@@ -61,6 +61,10 @@ namespace LanCom
                     ReceiveFile(startCom);
                     Console.WriteLine("Received file: {0}", startCom);
                     break;
+                case '2':
+                    ReceiveDir();
+                    Console.WriteLine("Directory received");
+                    break;
                 default:
                     break;
             }
@@ -85,11 +89,11 @@ namespace LanCom
             return data.Replace("<EOF>", "");
         }
 
-        private void ReceiveFile(string filename, string dir = "")
+        private void ReceiveFile(string filename)
         {
             byte[] fileBytes = new byte[1024];
 
-            BinaryWriter bWrite = new(File.Open(dir + filename, FileMode.Append));
+            BinaryWriter bWrite = new(File.Open(filename, FileMode.Append));
 
             while (Handler.Receive(fileBytes) > 0)
             {
@@ -99,6 +103,16 @@ namespace LanCom
             bWrite.Close();
         }
 
-        private void
+        private void ReceiveDir()
+        {
+            string fileInfo, dir;
+            while (true)
+            {
+                fileInfo = ReceiveText().Substring(1);
+                dir = fileInfo.Replace(Path.GetFileName(fileInfo), "");
+                Directory.CreateDirectory(dir);
+                ReceiveFile(fileInfo);
+            }
+        }
     }
 }

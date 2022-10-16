@@ -54,6 +54,9 @@ namespace LanCom
                 case "file":
                     SendFile(args[1]);
                     break;
+                case "dir":
+                    SendDir("D:\\Music");
+                    break;
                 default:
                     break;
             }
@@ -69,24 +72,55 @@ namespace LanCom
 
         private void SendFile(string path)
         {
-            string filename = path.Split("/").Last();
-
             if (!File.Exists(path))
-                throw new Exception("File doesn't exist or is unreachable");
+                throw new Exception("File not found");
 
-            sender.Send(Encoding.ASCII.GetBytes("1" + path + "<EOF>"));
+            _SendFile(path, Path.GetFileName(path));
+        }
+
+        private void _SendFile(string path, string relPath)
+        {
+            sender.Send(Encoding.ASCII.GetBytes("1" + relPath + "<EOF>"));
 
             FileStream file = new FileStream(path, FileMode.Open);
             byte[] fileChunk = new byte[1024];
             int bytesCount;
 
-            while((bytesCount = file.Read(fileChunk, 0, 1024)) > 0)
+            while ((bytesCount = file.Read(fileChunk, 0, 1024)) > 0)
             {
                 if (sender.Send(fileChunk, bytesCount, SocketFlags.None) != bytesCount)
                     throw new Exception("Error in sending the file");
             }
 
             file.Close();
+        }
+
+        private void SendDir(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                Console.WriteLine("Directory not found");
+                return;
+            }
+
+            string dir = Path.GetFullPath(Path.Combine(path, @"../"));
+            ProcessDir(dir, path);
+        }
+
+        private void ProcessDir(string startDir, string path)
+        {
+            string[] files = Directory.GetFiles(path);
+            foreach (string file in files)
+                ProcessFile(file, file.Replace(startDir, ""));
+
+            string[] dirs = Directory.GetDirectories(path);
+            foreach (string dir in dirs)
+                ProcessDir(startDir, dir);
+        }
+
+        private void ProcessFile(string path, string relPath)
+        {
+            _SendFile(path, relPath);
         }
     }
 }
