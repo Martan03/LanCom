@@ -23,7 +23,7 @@ namespace LanCom
             StartClient();
             Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
 
-            SendText("This is a test of the connection");
+            SendFile("test.txt");
 
             sender.Shutdown(SocketShutdown.Both);
             sender.Close();
@@ -40,6 +40,12 @@ namespace LanCom
         {
             byte[] msgBytes = Encoding.ASCII.GetBytes(msg + "<EOF>");
             int bytesSent = sender.Send(msgBytes);
+        }
+
+        private void SendFile(string filename)
+        {
+            byte[] fileBytes = File.ReadAllBytes(filename);
+            sender.Send(fileBytes);
         }
     }
 }

@@ -30,7 +30,7 @@ namespace LanCom
             Console.WriteLine("Server started");
 
             Handler = Listener.Accept();
-            ReceiveText();
+            ReceiveFile();
 
             Handler.Shutdown(SocketShutdown.Both);
             Handler.Close();
@@ -62,6 +62,17 @@ namespace LanCom
                 }
             }
             Console.WriteLine("Text received: {0}", data);
+        }
+
+        private void ReceiveFile()
+        {
+            byte[] clientData = new byte[1024 * 5000];
+            int bytesRec = Handler.Receive(clientData);
+
+            BinaryWriter bWrite = new(File.Open("test.txt", FileMode.Append));
+            bWrite.Write(clientData);
+            bWrite.Close();
+            Console.WriteLine("File received");
         }
     }
 }
