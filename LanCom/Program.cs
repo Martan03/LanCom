@@ -28,8 +28,11 @@ public class SocketListener
                 server.RunServer();
                 break;
             case "send":
-                Client client = new(args.Skip(1).ToArray(), "192.168.1.12");
+                Client client = new(args.Skip(1).ToArray());
                 client.RunClient();
+                break;
+            case "config":
+                Config(args.Skip(1).ToArray());
                 break;
             default:
                 Console.WriteLine("Invalid usage, type: LanCom help to show help!");
@@ -40,5 +43,23 @@ public class SocketListener
     private static void Help()
     {
         Console.WriteLine("Not implemented yet");
+    }
+
+    private static void Config(string[] args)
+    {
+        Settings settings = new();
+        foreach (string arg in args)
+        {
+            string code = arg.Split(":").Last();
+            if (arg.StartsWith("ip:"))
+                settings.defaultIP = code;
+            else if (arg.StartsWith("dir:"))
+                settings.defaultDir = code;
+            else if (arg.StartsWith("add:"))
+                settings.IPShortcuts.Add(code.Split("-")[0], code.Split("-")[1]);
+            else if (arg.StartsWith("remove:"))
+                settings.IPShortcuts.Remove(code);
+        }
+        settings.SaveSettings();
     }
 }

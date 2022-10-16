@@ -11,16 +11,18 @@ namespace LanCom
 {
     internal class Client
     {
-        private string ip { get; set; }
+        private string? ip { get; set; }
         private string[] args { get; set; }
-        private Socket sender { get; set; }
+        private Socket? sender { get; set; } = null;
         private int sendNum { get; set; }
+        private Settings settings { get; set; }
 
-        public Client(string[] args, string ip)
+        public Client(string[] args)
         {
-            this.ip = ip;
             this.args = args;
             this.sendNum = 1;
+            settings = new Settings();
+            this.ip = settings.defaultIP;
         }
 
         private void StartClient(int port = 11000)
@@ -37,6 +39,15 @@ namespace LanCom
                 Console.WriteLine("Invalid usage, type: LanCom help to show help.");
                 return;
             }
+
+            if (args.Length < 3 && settings.IPShortcuts == null)
+            {
+                Console.WriteLine("No Default IP set nor any IP given.");
+                return;
+            }
+
+            if (args.Length >= 3)
+                ip = args[3];
 
             switch (args[0])
             {
@@ -57,7 +68,7 @@ namespace LanCom
         private void SendText(string msg)
         {
             StartClient();
-            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
+            Console.WriteLine("Connected to {0}", sender?.RemoteEndPoint?.ToString());
 
             sender.Send(Encoding.ASCII.GetBytes("0:" + sendNum + ":<EOF>"));
             sendNum--;
@@ -72,7 +83,7 @@ namespace LanCom
         private void SendFile(string path)
         {
             StartClient();
-            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
+            Console.WriteLine("Connected to {0}", sender?.RemoteEndPoint?.ToString());
 
             _SendFile(path, Path.GetFileName(path));
 

@@ -12,33 +12,34 @@ namespace LanCom
 {
     internal class Server
     {
-        private Socket _listener;
-        public Socket Listener
-        {
-            get { return _listener; }
-            set { _listener = value; }
-        }
+        private Socket? Listener { get; set; } = null;
 
-        private Socket _handler;
-        public Socket Handler
-        {
-            get { return _handler; }
-            set { _handler = value; }
-        }
+        private Socket? Handler { get; set; } = null;
+
+        private int repeats { get; set; }
 
         public void RunServer()
         {
             StartServer();
+
+            if (Listener == null)
+            {
+                Console.WriteLine("Error creating socket");
+                return;
+            }
+
             Console.WriteLine("Server started");
 
-            while (true)
+            repeats = 1;
+
+            while (repeats > 0)
             {
                 Handler = Listener.Accept();
                 SelectOption();
                 Handler.Close();
+                repeats--;
             }
 
-            Listener.Shutdown(SocketShutdown.Both);
             Listener.Close();
         }
 
@@ -57,7 +58,7 @@ namespace LanCom
             char option = startCom[0];
 
             startCom = startCom.Substring(startCom.IndexOf(":") + 1);
-            int repeats = Int32.Parse(startCom.Substring(0, startCom.IndexOf(":")));
+            repeats = Int32.Parse(startCom.Substring(0, startCom.IndexOf(":")));
 
             startCom = startCom.Split(":").Last();
 
@@ -71,23 +72,20 @@ namespace LanCom
                     Console.WriteLine("Received file: {0}", startCom);
                     break;
                 default:
-                    Listener.Shutdown(SocketShutdown.Both);
-                    Listener.Close();
                     break;
-            }
-
-            if (repeats <= 1)
-            {
-                Handler.Close();
-                Listener.Shutdown(SocketShutdown.Both);
-                Listener.Close();
             }
         }
 
         private string ReceiveText()
         {
-            string data = null;
-            byte[] bytes = null;
+            if (Handler == null)
+            {
+                Console.WriteLine("Error maintaining connection with device.");
+                return "";
+            }
+
+            string? data = null;
+            byte[] bytes;
 
             while (true)
             {
@@ -105,8 +103,14 @@ namespace LanCom
 
         private void ReceiveFile(string path)
         {
+            if (Handler == null)
+            {
+                Console.WriteLine("Error maintaining connection with device.");
+                return;
+            }
+
             FileInfo fi = new FileInfo(path);
-            fi.Directory.Create();
+            fi.Directory?.Create();
 
             byte[] fileBytes = new byte[1024];
 
