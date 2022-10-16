@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO.Enumeration;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -41,30 +39,30 @@ namespace LanCom
 
         private void StartServer(int port = 11000)
         {
-            IPEndPoint localEndPoint = new (IPAddress.Any, port);
+            IPEndPoint localEndPoint = new(IPAddress.Any, port);
 
-            Listener = new (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            Listener = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             Listener.Bind(localEndPoint);
             Listener.Listen(10);
         }
 
         private void SelectOption()
         {
-            byte[] fileBytes = new byte[1024];
+            string startCom = ReceiveText();
+            char option = startCom[0];
+            startCom = startCom.Substring(1);
 
-            Handler.Receive(fileBytes);
-            string notifyStr = Encoding.ASCII.GetString(fileBytes);
-
-            if (notifyStr.StartsWith("text"))
+            switch (option)
             {
-                Console.WriteLine("Received text: {0}", ReceiveText());
-            }
-            else if (notifyStr.StartsWith("file"))
-            {
-                Console.WriteLine("test");
-                string path = Path.GetFileName(notifyStr.Split(":").Last());
-                Handler.Send(Encoding.ASCII.GetBytes("OK"));
-                ReceiveFile(path);
+                case '0':
+                    Console.WriteLine("Received text: {0}", ReceiveText());
+                    break;
+                case '1':
+                    ReceiveFile(startCom);
+                    Console.WriteLine("Received file: {0}", startCom);
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -87,29 +85,18 @@ namespace LanCom
             return data.Replace("<EOF>", "");
         }
 
-        private void ReceiveFile(string path)
+        private void ReceiveFile(string filename, string dir = "")
         {
-            FileInfo fi = new FileInfo(path);
-            fi.Directory.Create();
-            string filename = fi.FullName;
-
             byte[] fileBytes = new byte[1024];
 
-            int bytesRec = Handler.Receive(fileBytes, fileBytes.Length, SocketFlags.None);
+            BinaryWriter bWrite = new(File.Open(dir + filename, FileMode.Append));
 
-            BinaryWriter bWrite = new(File.Open(filename, FileMode.Append));
-
-            while (bytesRec > 0)
+            while (Handler.Receive(fileBytes) > 0)
             {
-                bytesRec = Handler.Receive(fileBytes, fileBytes.Length, SocketFlags.None);
-
-                if (bytesRec != 0)
-                    bWrite.Write(fileBytes);
+                bWrite.Write(fileBytes);
             }
 
             bWrite.Close();
-
-            Console.WriteLine("Received file: {0}", path);
         }
     }
 }

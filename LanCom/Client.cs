@@ -22,7 +22,13 @@ namespace LanCom
 
         public void RunClient()
         {
+            StartClient();
+            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
+
             SelectOption();
+
+            sender.Shutdown(SocketShutdown.Both);
+            sender.Close();
         }
 
         private void StartClient(int port = 11000)
@@ -48,9 +54,6 @@ namespace LanCom
                 case "file":
                     SendFile(args[1]);
                     break;
-                case "dir":
-                    SendDir(args[1]);
-                    break;
                 default:
                     break;
             }
@@ -58,81 +61,32 @@ namespace LanCom
 
         private void SendText(string msg)
         {
-            StartClient();
-            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
-
             sender.Send(Encoding.ASCII.GetBytes("0<EOF>"));
 
             byte[] msgBytes = Encoding.ASCII.GetBytes(msg + "<EOF>");
             int bytesSent = sender.Send(msgBytes);
-
-            sender.Shutdown(SocketShutdown.Both);
-            sender.Close();
         }
 
         private void SendFile(string path)
         {
+            string filename = path.Split("/").Last();
+
             if (!File.Exists(path))
-                throw new Exception("File not found");
+                throw new Exception("File doesn't exist or is unreachable");
 
-            _SendFile(path, Path.GetFileName(path));
-        }
+            sender.Send(Encoding.ASCII.GetBytes("1" + path + "<EOF>"));
 
-        private void _SendFile(string path, string relPath)
-        {
-            StartClient();
-            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
+            FileStream file = new FileStream(path, FileMode.Open);
+            byte[] fileChunk = new byte[1024];
+            int bytesCount;
 
-            byte[] fileData = File.ReadAllBytes(path);
-
-            string notifyString = "file:" + relPath;
-            byte[] notifyData = Encoding.ASCII.GetBytes(notifyString);
-
-            sender.Send(notifyData, 0, notifyData.Length, 0);
-
-            byte[] response = new byte[1024];
-            sender.Receive(response);
-            string res = Encoding.ASCII.GetString(response);
-
-            if (res.Contains("OK"))
+            while ((bytesCount = file.Read(fileChunk, 0, 1024)) > 0)
             {
-                sender.Send(fileData, 0, fileData.Length, 0);
-                Console.WriteLine("File [" + path + "] transferred");
-
-                sender.Shutdown(SocketShutdown.Both);
-                sender.Close();
-            }
-        }
-
-        private void SendDir(string path)
-        {
-            if (!Directory.Exists(path))
-            {
-                Console.WriteLine("Directory not found");
-                return;
+                if (sender.Send(fileChunk, bytesCount, SocketFlags.None) != bytesCount)
+                    throw new Exception("Error in sending the file");
             }
 
-            sender.Send(Encoding.ASCII.GetBytes("2<EOF>"));
-
-            string dir = Path.GetFullPath(Path.Combine(path, @"../"));
-
-            ProcessDir(dir, path);
-        }
-
-        private void ProcessDir(string startDir, string path)
-        {
-            string[] files = Directory.GetFiles(path);
-            foreach (string file in files)
-                ProcessFile(file, file.Replace(startDir, ""));
-
-            string[] dirs = Directory.GetDirectories(path);
-            foreach (string dir in dirs)
-                ProcessDir(startDir, dir);
-        }
-
-        private void ProcessFile(string path, string relPath)
-        {
-            _SendFile(path, relPath);
+            file.Close();
         }
     }
 }
