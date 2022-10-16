@@ -30,11 +30,15 @@ namespace LanCom
             StartServer();
             Console.WriteLine("Server started");
 
-            Handler = Listener.Accept();
-            SelectOption();
+            while (true)
+            {
+                Handler = Listener.Accept();
+                SelectOption();
+                Handler.Close();
+            }
 
-            Handler.Shutdown(SocketShutdown.Both);
-            Handler.Close();
+            Listener.Shutdown(SocketShutdown.Both);
+            Listener.Close();
         }
 
         private void StartServer(int port = 11000)
@@ -62,6 +66,8 @@ namespace LanCom
                     Console.WriteLine("Received file: {0}", startCom);
                     break;
                 default:
+                    Listener.Shutdown(SocketShutdown.Both);
+                    Listener.Close();
                     break;
             }
         }
@@ -85,11 +91,14 @@ namespace LanCom
             return data.Replace("<EOF>", "");
         }
 
-        private void ReceiveFile(string filename, string dir = "")
+        private void ReceiveFile(string path)
         {
+            FileInfo fi = new FileInfo(path);
+            fi.Directory.Create();
+
             byte[] fileBytes = new byte[1024];
 
-            BinaryWriter bWrite = new(File.Open(dir + filename, FileMode.Append));
+            BinaryWriter bWrite = new(File.Open(path, FileMode.Append));
 
             while (Handler.Receive(fileBytes) > 0)
             {

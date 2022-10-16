@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -27,7 +28,7 @@ namespace LanCom
             sender.Connect(remEP);
         }
 
-        private void RunClient()
+        public void RunClient()
         {
             if (args.Length < 2)
             {
@@ -84,7 +85,7 @@ namespace LanCom
                 return;
             }
 
-            sender.Send(Encoding.ASCII.GetBytes("1" + path + "<EOF>"));
+            sender.Send(Encoding.ASCII.GetBytes("1" + relPath + "<EOF>"));
 
             FileStream file = new FileStream(path, FileMode.Open);
             byte[] fileChunk = new byte[1024];
@@ -101,7 +102,35 @@ namespace LanCom
 
         private void SendDir(string path)
         {
-            return;
+            if (!Directory.Exists(path))
+            {
+                Console.WriteLine("Directory not found: {0}", path);
+                return;
+            }
+
+            string dir = Path.GetFullPath(Path.Combine(path, @"../"));
+            ProcessDir(dir, path);
+        }
+
+        private void ProcessDir(string startDir, string path)
+        {
+            string[] files = Directory.GetFiles(path);
+            foreach (string file in files)
+                ProcessFile(file, file.Replace(startDir, ""));
+
+            string[] dirs = Directory.GetDirectories(path);
+            foreach (string dir in dirs)
+                ProcessDir(startDir, dir);
+        }
+
+        private void ProcessFile(string path, string relPath)
+        {
+            StartClient();
+
+            _SendFile(path, relPath);
+
+            sender.Shutdown(SocketShutdown.Both);
+            sender.Close();
         }
     }
 }
