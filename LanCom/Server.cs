@@ -66,11 +66,16 @@ namespace LanCom
 
         private void ReceiveFile()
         {
-            byte[] clientData = new byte[1024 * 5000];
-            int bytesRec = Handler.Receive(clientData);
-
+            byte[] fileBytes = new byte[1024];
             BinaryWriter bWrite = new(File.Open("test.txt", FileMode.Append));
-            bWrite.Write(clientData);
+            int bytesRec = 1;
+
+            while (bytesRec != 0)
+            {
+                bytesRec = Handler.Receive(fileBytes);
+                bWrite.Write(fileBytes);
+            }
+
             bWrite.Close();
             Console.WriteLine("File received");
         }
