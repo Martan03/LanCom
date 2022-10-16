@@ -40,13 +40,19 @@ namespace LanCom
 
         private void SelectOption()
         {
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Invalid usage, type: LanCom help to show help.");
+                return;
+            }
+
             switch (args[0])
             {
                 case "text":
-                    SendText("This is a test of connection");
+                    SendText(args[1]);
                     break;
                 case "file":
-                    SendFile("test.txt");
+                    SendFile(args[1]);
                     break;
                 default:
                     break;
@@ -63,6 +69,11 @@ namespace LanCom
 
         private void SendFile(string path)
         {
+            string filename = path.Split("/").Last();
+
+            if (!File.Exists(path))
+                throw new Exception("File doesn't exist or is unreachable");
+
             sender.Send(Encoding.ASCII.GetBytes("1" + path + "<EOF>"));
 
             FileStream file = new FileStream(path, FileMode.Open);
