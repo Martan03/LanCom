@@ -75,35 +75,27 @@ namespace LanCom
             if (!File.Exists(path))
                 throw new Exception("File not found");
 
-            sender.Send(Encoding.ASCII.GetBytes("1<EOF>"));
-
             _SendFile(path, Path.GetFileName(path));
         }
 
         private void _SendFile(string path, string relPath)
         {
-            FileStream file = new FileStream(path, FileMode.Open);
-            byte[] fileChunk = new byte[1024];
-            int bytesCount;
+            byte[] fileData = File.ReadAllBytes(path);
 
-            byte[] filenameByte = Encoding.ASCII.GetBytes(Path.GetFileName(path));
-            byte[] filenameLen = BitConverter.GetBytes(filenameByte.Length);
-            byte[] fileLen = BitConverter.GetBytes(file.Length);
-            byte[] fileData = new byte[8 + filenameByte.Length];
+            string notifyString = "file:" + relPath;
+            byte[] notifyData = Encoding.ASCII.GetBytes(notifyString);
 
-            filenameLen.CopyTo(fileData, 0);
-            filenameByte.CopyTo(fileData, 4);
-            fileLen.CopyTo(fileData, 4 + filenameByte.Length);
+            sender.Send(notifyData);
 
-            sender.Send(fileData);
+            byte[] response = new byte[1024];
+            sender.Receive(response);
+            string res = Encoding.ASCII.GetString(response);
 
-            while ((bytesCount = file.Read(fileChunk, 0, 1024)) > 0)
+            if (res.Contains("OK"))
             {
-                if (sender.Send(fileChunk, bytesCount, SocketFlags.None) != bytesCount)
-                    throw new Exception("Error in sending the file");
+                sender.Send(fileData);
+                Console.WriteLine("File [" + path + "] transferred");
             }
-
-            file.Close();
         }
 
         private void SendDir(string path)

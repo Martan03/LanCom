@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO.Enumeration;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -48,24 +50,20 @@ namespace LanCom
 
         private void SelectOption()
         {
-            string startCom = ReceiveText();
-            char option = startCom[0];
+            byte[] fileBytes = new byte[1024];
 
-            switch (option)
+            Handler.Receive(fileBytes);
+            string notifyStr = Encoding.ASCII.GetString(fileBytes);
+
+            if (notifyStr.StartsWith("text"))
             {
-                case '0':
-                    Console.WriteLine("Received text: {0}", ReceiveText());
-                    break;
-                case '1':
-                    ReceiveFile();
-                    Console.WriteLine("File received");
-                    break;
-                case '2':
-                    ReceiveDir();
-                    Console.WriteLine("Directory received");
-                    break;
-                default:
-                    break;
+                Console.WriteLine("Received text: {0}", ReceiveText());
+            }
+            else if (notifyStr.StartsWith("file"))
+            {
+                string path = Path.GetFileName(notifyStr.Split(":").Last());
+                Handler.Send(Encoding.ASCII.GetBytes("OK"));
+                ReceiveFile(path);
             }
         }
 
@@ -88,37 +86,29 @@ namespace LanCom
             return data.Replace("<EOF>", "");
         }
 
-        private void ReceiveFile()
+        private void ReceiveFile(string path)
         {
+            FileInfo fi = new FileInfo(path);
+            fi.Directory.Create();
+            string filename = fi.FullName;
+
             byte[] fileBytes = new byte[1024];
 
-            Handler.Receive(fileBytes);
-            int filenameLen = BitConverter.ToInt32(fileBytes, 0);
-            string filename = Encoding.ASCII.GetString(fileBytes, 4, filenameLen);
-            int fileLen = BitConverter.ToInt32(fileBytes, 4 + filenameLen);
-
-            FileInfo file = new(filename);
-            file.Directory.Create();
+            int bytesRec = Handler.Receive(fileBytes, fileBytes.Length, SocketFlags.None);
 
             BinaryWriter bWrite = new(File.Open(filename, FileMode.Append));
-            int bytesRec = 0;
 
-            while (bytesRec <= fileLen)
+            while (bytesRec > 0)
             {
-                bytesRec += Handler.Receive(fileBytes);
-                bWrite.Write(fileBytes);
+                bytesRec = Handler.Receive(fileBytes, fileBytes.Length, SocketFlags.None);
+
+                if (bytesRec != 0)
+                    bWrite.Write(fileBytes);
             }
 
             bWrite.Close();
-        }
 
-        private void ReceiveDir()
-        {
-            string fileInfo;
-            while (true)
-            {
-                ReceiveFile();
-            }
+            Console.WriteLine("Received file: {0}", path);
         }
     }
 }
