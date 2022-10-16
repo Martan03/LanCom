@@ -61,6 +61,7 @@ namespace LanCom
             }
             else if (notifyStr.StartsWith("file"))
             {
+                Console.WriteLine("test");
                 string path = Path.GetFileName(notifyStr.Split(":").Last());
                 Handler.Send(Encoding.ASCII.GetBytes("OK"));
                 ReceiveFile(path);

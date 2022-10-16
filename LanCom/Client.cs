@@ -22,13 +22,7 @@ namespace LanCom
 
         public void RunClient()
         {
-            StartClient();
-            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
-
             SelectOption();
-
-            sender.Shutdown(SocketShutdown.Both);
-            sender.Close();
         }
 
         private void StartClient(int port = 11000)
@@ -64,10 +58,16 @@ namespace LanCom
 
         private void SendText(string msg)
         {
+            StartClient();
+            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
+
             sender.Send(Encoding.ASCII.GetBytes("0<EOF>"));
 
             byte[] msgBytes = Encoding.ASCII.GetBytes(msg + "<EOF>");
             int bytesSent = sender.Send(msgBytes);
+
+            sender.Shutdown(SocketShutdown.Both);
+            sender.Close();
         }
 
         private void SendFile(string path)
@@ -80,12 +80,15 @@ namespace LanCom
 
         private void _SendFile(string path, string relPath)
         {
+            StartClient();
+            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint.ToString());
+
             byte[] fileData = File.ReadAllBytes(path);
 
             string notifyString = "file:" + relPath;
             byte[] notifyData = Encoding.ASCII.GetBytes(notifyString);
 
-            sender.Send(notifyData);
+            sender.Send(notifyData, 0, notifyData.Length, 0);
 
             byte[] response = new byte[1024];
             sender.Receive(response);
@@ -93,8 +96,11 @@ namespace LanCom
 
             if (res.Contains("OK"))
             {
-                sender.Send(fileData);
+                sender.Send(fileData, 0, fileData.Length, 0);
                 Console.WriteLine("File [" + path + "] transferred");
+
+                sender.Shutdown(SocketShutdown.Both);
+                sender.Close();
             }
         }
 
