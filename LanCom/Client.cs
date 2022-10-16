@@ -75,17 +75,27 @@ namespace LanCom
             if (!File.Exists(path))
                 throw new Exception("File not found");
 
+            sender.Send(Encoding.ASCII.GetBytes("1<EOF>"));
+
             _SendFile(path, Path.GetFileName(path));
         }
 
         private void _SendFile(string path, string relPath)
         {
-            Thread.Sleep(100);
-            sender.Send(Encoding.ASCII.GetBytes("1" + relPath + "<EOF>"));
-
             FileStream file = new FileStream(path, FileMode.Open);
             byte[] fileChunk = new byte[1024];
             int bytesCount;
+
+            byte[] filenameByte = Encoding.ASCII.GetBytes(Path.GetFileName(path));
+            byte[] filenameLen = BitConverter.GetBytes(filenameByte.Length);
+            byte[] fileLen = BitConverter.GetBytes(file.Length);
+            byte[] fileData = new byte[8 + filenameByte.Length];
+
+            filenameLen.CopyTo(fileData, 0);
+            filenameByte.CopyTo(fileData, 4);
+            fileLen.CopyTo(fileData, 4 + filenameByte.Length);
+
+            sender.Send(fileData);
 
             while ((bytesCount = file.Read(fileChunk, 0, 1024)) > 0)
             {

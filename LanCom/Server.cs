@@ -50,7 +50,6 @@ namespace LanCom
         {
             string startCom = ReceiveText();
             char option = startCom[0];
-            startCom = startCom.Substring(1);
 
             switch (option)
             {
@@ -58,8 +57,8 @@ namespace LanCom
                     Console.WriteLine("Received text: {0}", ReceiveText());
                     break;
                 case '1':
-                    ReceiveFile(startCom);
-                    Console.WriteLine("Received file: {0}", startCom);
+                    ReceiveFile();
+                    Console.WriteLine("File received");
                     break;
                 case '2':
                     ReceiveDir();
@@ -89,14 +88,24 @@ namespace LanCom
             return data.Replace("<EOF>", "");
         }
 
-        private void ReceiveFile(string filename)
+        private void ReceiveFile()
         {
             byte[] fileBytes = new byte[1024];
 
-            BinaryWriter bWrite = new(File.Open(filename, FileMode.Append));
+            Handler.Receive(fileBytes);
+            int filenameLen = BitConverter.ToInt32(fileBytes, 0);
+            string filename = Encoding.ASCII.GetString(fileBytes, 4, filenameLen);
+            int fileLen = BitConverter.ToInt32(fileBytes, 4 + filenameLen);
 
-            while (Handler.Receive(fileBytes) > 0)
+            FileInfo file = new(filename);
+            file.Directory.Create();
+
+            BinaryWriter bWrite = new(File.Open(filename, FileMode.Append));
+            int bytesRec = 0;
+
+            while (bytesRec <= fileLen)
             {
+                bytesRec += Handler.Receive(fileBytes);
                 bWrite.Write(fileBytes);
             }
 
@@ -108,15 +117,7 @@ namespace LanCom
             string fileInfo;
             while (true)
             {
-                fileInfo = ReceiveText().Substring(1);
-
-                if (fileInfo == "")
-                    break;
-
-                FileInfo file = new(fileInfo);
-                file.Directory.Create();
-
-                ReceiveFile(fileInfo);
+                ReceiveFile();
             }
         }
     }
