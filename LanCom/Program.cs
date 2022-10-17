@@ -42,7 +42,32 @@ public class SocketListener
 
     private static void Help()
     {
-        Console.WriteLine("Not implemented yet");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write("Welcome to ");
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.Write("LanCom!\n");
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
+        Console.WriteLine("Help:");
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write("LanCom receive");
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.Write(" - starts a server and starts receiving\n");
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write("LanCom send text <message> <ip>");
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.Write(" - sends a text to the server on IP\n");
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write("LanCom send file <path> <ip>");
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.Write(" - sends a file to the server on IP\n");
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write("LanCom send dir <path> <ip>");
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.Write(" - sends a directory to the server on IP\n");
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write("LanCom config ip:<ip> dir:<path> add:<shortcut>-<ip> remove:<shortcut>");
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.Write(" - saves given ip/dir as default and adds/removes shortcut\n");
     }
 
     private static void Config(string[] args)
@@ -56,8 +81,18 @@ public class SocketListener
             else if (arg.StartsWith("dir:"))
                 settings.defaultDir = code;
             else if (arg.StartsWith("add:"))
-                settings.IPShortcuts.Add(code.Split("-")[0], code.Split("-")[1]);
-            else if (arg.StartsWith("remove:"))
+            {
+                string[] data = code.Split("-");
+                if (settings.IPShortcuts == null)
+                    settings.IPShortcuts = new Dictionary<string, string>();
+                if (settings.IPShortcuts.ContainsKey(data[0]))
+                    settings.IPShortcuts[data[0]] = data[1];
+                else
+                    settings.IPShortcuts.Add(data[0], data[1]);
+            }
+            else if (arg.StartsWith("remove:")
+                     && settings.IPShortcuts != null
+                     && settings.IPShortcuts.ContainsKey(code.Split("-")[0]))
                 settings.IPShortcuts.Remove(code);
         }
         settings.SaveSettings();

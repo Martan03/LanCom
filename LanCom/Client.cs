@@ -20,16 +20,18 @@ namespace LanCom
         public Client(string[] args)
         {
             this.args = args;
-            this.sendNum = 1;
+            sendNum = 1;
             settings = new Settings();
-            this.ip = settings.defaultIP;
+            ip = settings.defaultIP;
         }
 
-        private void StartClient(int port = 11000)
+        private bool StartClient(int port = 11000)
         {
             IPEndPoint remEP = new(IPAddress.Parse(ip), port);
             sender = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             sender.Connect(remEP);
+
+            return true;
         }
 
         public void RunClient()
@@ -40,7 +42,7 @@ namespace LanCom
                 return;
             }
 
-            if (args.Length < 3 && settings.IPShortcuts == null)
+            if (args.Length < 3 && settings.defaultIP == null)
             {
                 Console.WriteLine("No Default IP set nor any IP given.");
                 return;

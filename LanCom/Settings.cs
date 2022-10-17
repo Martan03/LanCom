@@ -15,12 +15,7 @@ namespace LanCom
 
         public Settings()
         {
-            if (File.Exists("settings.json"))
-            {
-                LoadSettings();
-            }
-            else
-                IPShortcuts = new Dictionary<string, string>();
+            IPShortcuts = new Dictionary<string, string>();
         }
 
         public void SaveSettings()
