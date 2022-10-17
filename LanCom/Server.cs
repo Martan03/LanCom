@@ -17,6 +17,7 @@ namespace LanCom
         private Socket? Handler { get; set; } = null;
 
         private int repeats { get; set; }
+        private string? defaultDir { get; set; }
 
         public void RunServer()
         {
@@ -29,6 +30,9 @@ namespace LanCom
             }
 
             Console.WriteLine("Server started");
+
+            Settings settings = new();
+            defaultDir = settings.defaultDir;
 
             repeats = 1;
 
@@ -107,6 +111,11 @@ namespace LanCom
             {
                 Console.WriteLine("Error maintaining connection with device.");
                 return;
+            }
+
+            if (defaultDir != null)
+            {
+                path = defaultDir + "/" +  path;
             }
 
             FileInfo fi = new FileInfo(path);
