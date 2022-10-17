@@ -107,7 +107,7 @@ namespace LanCom
 
         private void ReceiveFile(string path)
         {
-            if (Handler == null)
+            if (Handler is null)
             {
                 Console.WriteLine("Error maintaining connection with device.");
                 return;

@@ -10,7 +10,7 @@ public class SocketListener
 {
     public static int Main(string[] args)
     {
-        //StartCom(args);
+        StartCom(args);
 
         return 0;
     }

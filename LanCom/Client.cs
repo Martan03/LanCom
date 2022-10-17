@@ -25,6 +25,9 @@ namespace LanCom
             ip = settings.defaultIP ?? "127.0.0.1";
         }
 
+        /// <summary>
+        /// Runs client depending on the arguments given
+        /// </summary>
         public void RunClient()
         {
             string arg = "";
@@ -58,11 +61,19 @@ namespace LanCom
 
             FileAttributes attr = File.GetAttributes(arg);
             if (attr.HasFlag(FileAttributes.Directory))
+            {
+                Console.WriteLine("sendir");
                 SendDir(arg);
+            }
             else
                 SendFile(arg);
         }
 
+        /// <summary>
+        /// Connects to the server on given ip
+        /// </summary>
+        /// <param name="port">number of port of communication</param>
+        /// <returns>true on success, else false</returns>
         private bool StartClient(int port = 11000)
         {
             try
@@ -79,6 +90,10 @@ namespace LanCom
             return true;
         }
 
+        /// <summary>
+        /// Sends text to the server
+        /// </summary>
+        /// <param name="msg">text to be send</param>
         private void SendText(string msg)
         {
             if (!StartClient() || sender is null)
@@ -96,9 +111,13 @@ namespace LanCom
             sender.Close();
         }
 
+        /// <summary>
+        /// Prepares sending file to the server
+        /// </summary>
+        /// <param name="path">file path</param>
         private void SendFile(string path)
         {
-            if (StartClient() || sender is null)
+            if (!StartClient() || sender is null)
                 return;
 
             Console.WriteLine("Connected to {0}", sender.RemoteEndPoint?.ToString());
@@ -109,6 +128,11 @@ namespace LanCom
             sender.Close();
         }
 
+        /// <summary>
+        /// Sends file to the server
+        /// </summary>
+        /// <param name="path">file path</param>
+        /// <param name="relPath">path where file will be saved on server</param>
         private void _SendFile(string path, string relPath)
         {
             if (!File.Exists(path) || sender is null)
@@ -124,12 +148,20 @@ namespace LanCom
             while ((bytesCount = file.Read(fileChunk, 0, 1024)) > 0)
             {
                 if (sender.Send(fileChunk, bytesCount, SocketFlags.None) != bytesCount)
-                    throw new Exception("Error in sending the file");
+                {
+                    Console.WriteLine("Error while sending the file");
+                    file.Close();
+                    return;
+                }
             }
 
             file.Close();
         }
 
+        /// <summary>
+        /// Prepares sending folder to the server
+        /// </summary>
+        /// <param name="path">path to the folder</param>
         private void SendDir(string path)
         {
             if (!Directory.Exists(path))
@@ -141,6 +173,11 @@ namespace LanCom
             ProcessDir(dir, path);
         }
 
+        /// <summary>
+        /// Processes given dir, searches all directories for files and sends them
+        /// </summary>
+        /// <param name="startDir">Start dir of search</param>
+        /// <param name="path">Path that is being searched</param>
         private void ProcessDir(string startDir, string path)
         {
             string[] files = Directory.GetFiles(path);
@@ -152,6 +189,11 @@ namespace LanCom
                 ProcessDir(startDir, dir);
         }
 
+        /// <summary>
+        /// Prepares sending file found in directory to the server
+        /// </summary>
+        /// <param name="path">path to file</param>
+        /// <param name="relPath">path where file will be saved on the server</param>
         private void ProcessFile(string path, string relPath)
         {
             if (!StartClient() || sender is null)
@@ -163,6 +205,12 @@ namespace LanCom
             sender.Close();
         }
 
+        /// <summary>
+        /// Counts files in all directories
+        /// </summary>
+        /// <param name="path">directory to be search</param>
+        /// <param name="n">number of found files</param>
+        /// <returns>number of found files</returns>
         private int CountFiles(string path, int n)
         {
             string[] dirs = Directory.GetDirectories(path);
@@ -174,10 +222,15 @@ namespace LanCom
             return n;
         }
 
-        private bool IsIP(string path)
+        /// <summary>
+        /// Checks if given string is ip
+        /// </summary>
+        /// <param name="str">string to be checked</param>
+        /// <returns>true if is ip, else false</returns>
+        private bool IsIP(string str)
         {
             IPAddress? address;
-            return IPAddress.TryParse(path, out address);
+            return IPAddress.TryParse(str, out address);
         }
     }
 }
