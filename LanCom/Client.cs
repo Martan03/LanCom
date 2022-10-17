@@ -49,7 +49,7 @@ namespace LanCom
             }
 
             if (args.Length >= 3)
-                ip = args[3];
+                ip = args[2];
 
             switch (args[0])
             {
