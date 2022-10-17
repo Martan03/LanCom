@@ -11,10 +11,10 @@ namespace LanCom
 {
     internal class Client
     {
-        private string? ip { get; set; }
         private string[] args { get; set; }
-        private Socket? sender { get; set; } = null;
         private int sendNum { get; set; }
+        private string ip { get; set; }
+        private Socket? sender { get; set; }
         private Settings settings { get; set; }
 
         public Client(string[] args)
@@ -22,55 +22,69 @@ namespace LanCom
             this.args = args;
             sendNum = 1;
             settings = new Settings();
-            ip = settings.defaultIP;
-        }
-
-        private bool StartClient(int port = 11000)
-        {
-            IPEndPoint remEP = new(IPAddress.Parse(ip), port);
-            sender = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            sender.Connect(remEP);
-
-            return true;
+            ip = settings.defaultIP ?? "127.0.0.1";
         }
 
         public void RunClient()
         {
-            if (args.Length < 2)
+            string arg = "";
+            if (args.Length == 0)
             {
-                Console.WriteLine("Invalid usage, type: LanCom help to show help.");
+                arg = "./";
+            }
+            else if (args.Length == 1)
+            {
+                if (IsIP(args[0]))
+                    ip = args[0];
+                else
+                    arg = args[0];
+            }
+            else if (args.Length >= 2)
+            {
+                arg = args[0];
+                if (!IsIP(args[1]))
+                {
+                    Console.WriteLine("{0} is not a valid IP", args[1]);
+                    return;
+                }
+                ip = args[1];
+            }
+
+            if (!Directory.Exists(arg) && !File.Exists(arg))
+            {
+                SendText(arg);
                 return;
             }
 
-            if (args.Length < 3 && settings.defaultIP == null)
-            {
-                Console.WriteLine("No Default IP set nor any IP given.");
-                return;
-            }
+            FileAttributes attr = File.GetAttributes(arg);
+            if (attr.HasFlag(FileAttributes.Directory))
+                SendDir(arg);
+            else
+                SendFile(arg);
+        }
 
-            if (args.Length >= 3)
-                ip = args[3];
-
-            switch (args[0])
+        private bool StartClient(int port = 11000)
+        {
+            try
             {
-                case "text":
-                    SendText(args[1]);
-                    break;
-                case "file":
-                    SendFile(args[1]);
-                    break;
-                case "dir":
-                    SendDir(args[1]);
-                    break;
-                default:
-                    break;
+                IPEndPoint remEP = new(IPAddress.Parse(ip), port);
+                sender = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                sender.Connect(remEP);
             }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error connecting: {0}", e.Message);
+                return false;
+            }
+            return true;
         }
 
         private void SendText(string msg)
         {
-            StartClient();
-            Console.WriteLine("Connected to {0}", sender?.RemoteEndPoint?.ToString());
+            if (!StartClient() || sender is null)
+                return;
+
+            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint?.ToString());
 
             sender.Send(Encoding.ASCII.GetBytes("0:" + sendNum + ":<EOF>"));
             sendNum--;
@@ -84,8 +98,10 @@ namespace LanCom
 
         private void SendFile(string path)
         {
-            StartClient();
-            Console.WriteLine("Connected to {0}", sender?.RemoteEndPoint?.ToString());
+            if (StartClient() || sender is null)
+                return;
+
+            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint?.ToString());
 
             _SendFile(path, Path.GetFileName(path));
 
@@ -95,11 +111,8 @@ namespace LanCom
 
         private void _SendFile(string path, string relPath)
         {
-            if (!File.Exists(path))
-            {
-                Console.WriteLine("File not found: {0}", path);
+            if (!File.Exists(path) || sender is null)
                 return;
-            }
 
             sender.Send(Encoding.ASCII.GetBytes("1:" + sendNum + ":" + relPath + "<EOF>"));
             sendNum--;
@@ -120,10 +133,7 @@ namespace LanCom
         private void SendDir(string path)
         {
             if (!Directory.Exists(path))
-            {
-                Console.WriteLine("Directory not found: {0}", path);
                 return;
-            }
 
             sendNum = CountFiles(path, 0);
 
@@ -144,7 +154,8 @@ namespace LanCom
 
         private void ProcessFile(string path, string relPath)
         {
-            StartClient();
+            if (!StartClient() || sender is null)
+                return;
 
             _SendFile(path, relPath);
 
@@ -161,6 +172,12 @@ namespace LanCom
             n += Directory.GetFiles(path).Length;
 
             return n;
+        }
+
+        private bool IsIP(string path)
+        {
+            IPAddress? address;
+            return IPAddress.TryParse(path, out address);
         }
     }
 }

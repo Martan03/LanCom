@@ -1,6 +1,7 @@
 ﻿using LanCom;
 using System;
 using System.Collections.Specialized;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -9,7 +10,7 @@ public class SocketListener
 {
     public static int Main(string[] args)
     {
-        StartCom(args);
+        //StartCom(args);
 
         return 0;
     }
