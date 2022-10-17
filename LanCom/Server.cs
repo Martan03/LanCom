@@ -114,9 +114,7 @@ namespace LanCom
             }
 
             if (defaultDir != null)
-            {
-                path = defaultDir + "/" +  path;
-            }
+                path = defaultDir + "/" + path;
 
             FileInfo fi = new FileInfo(path);
             fi.Directory?.Create();
