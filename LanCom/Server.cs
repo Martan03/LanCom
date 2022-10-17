@@ -12,29 +12,28 @@ namespace LanCom
 {
     internal class Server
     {
-        private Socket? Listener { get; set; } = null;
+        private Socket? Listener { get; set; }
 
-        private Socket? Handler { get; set; } = null;
+        private Socket? Handler { get; set; }
 
         private int repeats { get; set; }
-        private string? defaultDir { get; set; }
+        private string defaultDir { get; set; }
+
+        public Server()
+        {
+            Settings settings = new Settings();
+            settings.LoadSettings();
+            defaultDir = settings.defaultDir ?? "";
+            repeats = 1;
+        }
 
         public void RunServer()
         {
-            StartServer();
-
-            if (Listener == null)
-            {
-                Console.WriteLine("Error creating socket");
+            if (!StartServer() || Listener is null)
                 return;
-            }
 
             Console.WriteLine("Server started");
-
-            Settings settings = new();
-            defaultDir = settings.defaultDir;
-
-            repeats = 1;
+            ShowIP();
 
             while (repeats > 0)
             {
@@ -47,13 +46,22 @@ namespace LanCom
             Listener.Close();
         }
 
-        private void StartServer(int port = 11000)
+        private bool StartServer(int port = 11000)
         {
-            IPEndPoint localEndPoint = new(IPAddress.Any, port);
+            try
+            {
+                IPEndPoint localEndPoint = new(IPAddress.Any, port);
 
-            Listener = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            Listener.Bind(localEndPoint);
-            Listener.Listen(10);
+                Listener = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                Listener.Bind(localEndPoint);
+                Listener.Listen(10);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error creating server: {0}", e.Message);
+                return false;
+            }
+            return true;
         }
 
         private void SelectOption()
@@ -129,6 +137,18 @@ namespace LanCom
             }
 
             bWrite.Close();
+        }
+
+        private void ShowIP()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    Console.WriteLine(ip.ToString());
+                }
+            }
         }
     }
 }

@@ -22,6 +22,7 @@ namespace LanCom
             this.args = args;
             sendNum = 1;
             settings = new Settings();
+            settings.LoadSettings();
             ip = settings.defaultIP ?? "127.0.0.1";
         }
 
