@@ -23,10 +23,13 @@ namespace LanCom
         {
             Settings settings = new Settings();
             settings.LoadSettings();
-            defaultDir = settings.defaultDir ?? "";
+            defaultDir = settings.defaultDir ?? "./";
             repeats = 1;
         }
 
+        /// <summary>
+        /// Runs a server and wait for a connection
+        /// </summary>
         public void RunServer()
         {
             if (!StartServer() || Listener is null)
@@ -46,6 +49,11 @@ namespace LanCom
             Listener.Close();
         }
 
+        /// <summary>
+        /// Starts server
+        /// </summary>
+        /// <param name="port">port number</param>
+        /// <returns>true on success, else false</returns>
         private bool StartServer(int port = 11000)
         {
             try
@@ -64,6 +72,9 @@ namespace LanCom
             return true;
         }
 
+        /// <summary>
+        /// Switches between receiving files and text
+        /// </summary>
         private void SelectOption()
         {
             string startCom = ReceiveText();
@@ -88,15 +99,19 @@ namespace LanCom
             }
         }
 
+        /// <summary>
+        /// Receives text from connected client
+        /// </summary>
+        /// <returns>received text</returns>
         private string ReceiveText()
         {
-            if (Handler == null)
+            if (Handler is null)
             {
                 Console.WriteLine("Error maintaining connection with device.");
                 return "";
             }
 
-            string? data = null;
+            string data = "";
             byte[] bytes;
 
             while (true)
@@ -113,6 +128,10 @@ namespace LanCom
             return data.Replace("<EOF>", "");
         }
 
+        /// <summary>
+        /// Receives file from connected client
+        /// </summary>
+        /// <param name="path">file path to save it</param>
         private void ReceiveFile(string path)
         {
             if (Handler is null)
@@ -121,8 +140,7 @@ namespace LanCom
                 return;
             }
 
-            if (defaultDir != null)
-                path = defaultDir + "/" + path;
+            path = defaultDir + "/" + path;
 
             FileInfo fi = new FileInfo(path);
             fi.Directory?.Create();
@@ -139,6 +157,9 @@ namespace LanCom
             bWrite.Close();
         }
 
+        /// <summary>
+        /// Shows local ip address
+        /// </summary>
         private void ShowIP()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
