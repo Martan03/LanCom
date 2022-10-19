@@ -13,10 +13,9 @@ namespace LanCom
     internal class Server
     {
         private Socket? Listener { get; set; }
-
         private Socket? Handler { get; set; }
 
-        private int repeats { get; set; }
+        private bool repeat { get; set; }
         private string defaultDir { get; set; }
 
         public Server()
@@ -24,7 +23,7 @@ namespace LanCom
             Settings settings = new Settings();
             settings.LoadSettings();
             defaultDir = settings.defaultDir ?? "./";
-            repeats = 1;
+            repeat = true;
         }
 
         /// <summary>
@@ -35,15 +34,14 @@ namespace LanCom
             if (!StartServer() || Listener is null)
                 return;
 
-            Console.WriteLine("Server started");
+            Console.WriteLine("Server started:");
             ShowIP();
 
-            while (repeats > 0)
+            while (repeat)
             {
+                Listener.Listen(10);
                 Handler = Listener.Accept();
                 SelectOption();
-                Handler.Close();
-                repeats--;
             }
 
             Listener.Close();
@@ -62,7 +60,6 @@ namespace LanCom
 
                 Listener = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 Listener.Bind(localEndPoint);
-                Listener.Listen(10);
             }
             catch (Exception e)
             {
@@ -77,25 +74,38 @@ namespace LanCom
         /// </summary>
         private void SelectOption()
         {
-            string startCom = ReceiveText();
-            char option = startCom[0];
+            byte[] notifyArray = new byte[1024];
 
-            startCom = startCom.Substring(startCom.IndexOf(":") + 1);
-            repeats = Int32.Parse(startCom.Substring(0, startCom.IndexOf(":")));
+            Handler!.Receive(notifyArray);
+            string notifyStr = Encoding.UTF8.GetString(notifyArray);
+            string temp = "9Vr3Hjqn0v:";
 
-            startCom = startCom.Split(":").Last();
-
-            switch (option)
+            if (notifyStr.StartsWith(temp + "file "))
             {
-                case '0':
-                    Console.WriteLine("Received text: {0}", ReceiveText());
-                    break;
-                case '1':
-                    ReceiveFile(startCom);
-                    Console.WriteLine("Received file: {0}", startCom);
-                    break;
-                default:
-                    break;
+                string path = notifyStr.Replace(temp + "file ", "");
+
+                path = string.Concat(path.Split(Path.GetInvalidPathChars())).Trim();
+
+                FileInfo fi = new(path);
+                fi.Directory?.Create();
+                File.Create(path).Close();
+
+                Handler.Send(Encoding.UTF8.GetBytes("OK"));
+
+                ReceiveFile(path);
+
+                Handler.Close();
+                Console.WriteLine("Received file [{0}]...", path);
+            }
+            else if (notifyStr.StartsWith(temp + "text "))
+            {
+                Console.WriteLine("Not implemented yet");
+                Handler.Close();
+            }
+            else if (notifyStr.StartsWith(temp + "end "))
+            {
+                Handler.Close();
+                repeat = false;
             }
         }
 
@@ -134,24 +144,19 @@ namespace LanCom
         /// <param name="path">file path to save it</param>
         private void ReceiveFile(string path)
         {
-            if (Handler is null)
-            {
-                Console.WriteLine("Error maintaining connection with device.");
-                return;
-            }
-
-            path = defaultDir + "/" + path;
-
-            FileInfo fi = new FileInfo(path);
-            fi.Directory?.Create();
-
             byte[] fileBytes = new byte[1024];
+            int bytesRec = Handler!.Receive(fileBytes, fileBytes.Length, SocketFlags.None);
 
             BinaryWriter bWrite = new(File.Open(path, FileMode.Append));
+            bWrite.Write(fileBytes);
 
-            while (Handler.Receive(fileBytes) > 0)
+            while (bytesRec > 0)
             {
-                bWrite.Write(fileBytes);
+                bytesRec = Handler.Receive(fileBytes, fileBytes.Length, 0);
+                if (bytesRec != 0)
+                {
+                    bWrite.Write(fileBytes, 0, bytesRec);
+                }
             }
 
             bWrite.Close();

@@ -53,21 +53,24 @@ namespace LanCom
                 }
                 ip = args[1];
             }
-
+            /*
             if (!Directory.Exists(arg) && !File.Exists(arg))
             {
                 SendText(arg);
-                return;
-            }
-
+            }*/
             FileAttributes attr = File.GetAttributes(arg);
             if (attr.HasFlag(FileAttributes.Directory))
-            {
-                Console.WriteLine("sendir");
                 SendDir(arg);
-            }
             else
                 SendFile(arg);
+
+            if (StartClient() && sender is not null)
+            {
+                string notifyString = "9Vr3Hjqn0v:end ";
+                byte[] notifyData = Encoding.UTF8.GetBytes(notifyString);
+
+                sender.Send(notifyData, 0, notifyData.Length, 0);
+            }
         }
 
         /// <summary>
@@ -100,15 +103,11 @@ namespace LanCom
             if (!StartClient() || sender is null)
                 return;
 
-            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint?.ToString());
+            string notifyString = "9Vr3Hjqn0v:file " + msg;
+            byte[] notifyData = Encoding.UTF8.GetBytes(notifyString);
 
-            sender.Send(Encoding.ASCII.GetBytes("0:" + sendNum + ":<EOF>"));
-            sendNum--;
+            sender.Send(notifyData, 0, notifyData.Length, 0);
 
-            byte[] msgBytes = Encoding.ASCII.GetBytes(msg + "<EOF>");
-            int bytesSent = sender.Send(msgBytes);
-
-            sender.Shutdown(SocketShutdown.Both);
             sender.Close();
         }
 
@@ -118,15 +117,13 @@ namespace LanCom
         /// <param name="path">file path</param>
         private void SendFile(string path)
         {
-            if (!StartClient() || sender is null)
+            if (!File.Exists(path))
+            {
+                Console.WriteLine("File doesn't exist or can't be accessed");
                 return;
-
-            Console.WriteLine("Connected to {0}", sender.RemoteEndPoint?.ToString());
+            }
 
             _SendFile(path, Path.GetFileName(path));
-
-            sender.Shutdown(SocketShutdown.Both);
-            sender.Close();
         }
 
         /// <summary>
@@ -136,27 +133,35 @@ namespace LanCom
         /// <param name="relPath">path where file will be saved on server</param>
         private void _SendFile(string path, string relPath)
         {
-            if (!File.Exists(path) || sender is null)
-                return;
-
-            sender.Send(Encoding.ASCII.GetBytes("1:" + sendNum + ":" + relPath + "<EOF>"));
-            sendNum--;
-
-            FileStream file = new FileStream(path, FileMode.Open);
-            byte[] fileChunk = new byte[1024];
-            int bytesCount;
-
-            while ((bytesCount = file.Read(fileChunk, 0, 1024)) > 0)
+            try
             {
-                if (sender.Send(fileChunk, bytesCount, SocketFlags.None) != bytesCount)
+                if (!StartClient() || sender is null)
+                    throw new Exception();
+
+                byte[] fileData = File.ReadAllBytes(path);
+
+                string notifyString = "9Vr3Hjqn0v:file " + relPath;
+                byte[] notifyData = Encoding.UTF8.GetBytes(notifyString);
+
+                sender.Send(notifyData, 0, notifyData.Length, 0);
+
+                byte[] response = new byte[512];
+                sender.Receive(response);
+
+                notifyString = Encoding.UTF8.GetString(response);
+                if (notifyString.Contains("OK"))
                 {
-                    Console.WriteLine("Error while sending the file");
-                    file.Close();
-                    return;
+                    sender.Send(fileData, 0, fileData.Length, 0);
+
+                    sender.Close();
+
+                    Console.WriteLine("File [{0}] transferred", path);
                 }
             }
-
-            file.Close();
+            catch (Exception e)
+            {
+                Console.WriteLine("Error sending: {0}", e.Message);
+            }
         }
 
         /// <summary>
@@ -183,27 +188,11 @@ namespace LanCom
         {
             string[] files = Directory.GetFiles(path);
             foreach (string file in files)
-                ProcessFile(file, file.Replace(startDir, ""));
+                _SendFile(file, file.Replace(startDir, ""));
 
             string[] dirs = Directory.GetDirectories(path);
             foreach (string dir in dirs)
                 ProcessDir(startDir, dir);
-        }
-
-        /// <summary>
-        /// Prepares sending file found in directory to the server
-        /// </summary>
-        /// <param name="path">path to file</param>
-        /// <param name="relPath">path where file will be saved on the server</param>
-        private void ProcessFile(string path, string relPath)
-        {
-            if (!StartClient() || sender is null)
-                return;
-
-            _SendFile(path, relPath);
-
-            sender.Shutdown(SocketShutdown.Both);
-            sender.Close();
         }
 
         /// <summary>
