@@ -43,32 +43,19 @@ public class SocketListener
 
     private static void Help()
     {
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.Write("Welcome to ");
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.Write("LanCom!\n");
-        Console.ForegroundColor = ConsoleColor.DarkYellow;
-        Console.WriteLine("Help:");
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.Write("LanCom receive");
-        Console.ForegroundColor = ConsoleColor.Gray;
-        Console.Write(" - starts a server and starts receiving\n");
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.Write("LanCom send text <message> <ip>");
-        Console.ForegroundColor = ConsoleColor.Gray;
-        Console.Write(" - sends a text to the server on IP\n");
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.Write("LanCom send file <path> <ip>");
-        Console.ForegroundColor = ConsoleColor.Gray;
-        Console.Write(" - sends a file to the server on IP\n");
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.Write("LanCom send dir <path> <ip>");
-        Console.ForegroundColor = ConsoleColor.Gray;
-        Console.Write(" - sends a directory to the server on IP\n");
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.Write("LanCom config ip:<ip> dir:<path> add:<shortcut>-<ip> remove:<shortcut>");
-        Console.ForegroundColor = ConsoleColor.Gray;
-        Console.Write(" - saves given ip/dir as default and adds/removes shortcut\n");
+        Console.WriteLine("Welcome to \u001b[36mLanCom\u001b[0m help!");
+        Console.WriteLine("\n\u001b[33mUsage:\u001b[0m");
+        Console.WriteLine("   lancom {\u001b[33;1mCOMMAND\u001b[0m}");
+        Console.WriteLine("\n\u001b[33mCommands:\u001b[0m");
+        Console.WriteLine("   \u001b[33;1mreceive\u001b[0m                 starts server for receiving");
+        Console.WriteLine("   \u001b[33;1msend\u001b[0m [\u001b[36;1marg\u001b[0m] [\u001b[36;1mip\u001b[0m]         starts client for sending");
+        Console.WriteLine("      \u001b[36;1marg\u001b[0m                  path to file/folder or message to be send");
+        Console.WriteLine("      \u001b[36;1mip\u001b[0m                   ip of the server");
+        Console.WriteLine("   \u001b[33;1mconfig\u001b[0m [\u001b[36;1margs\u001b[0m]\u001b[0m           starts server for receiving");
+        Console.WriteLine("      \u001b[36;1mip\u001b[0m:<ip>              saves IP as default for sending");
+        Console.WriteLine("      \u001b[36;1mdir\u001b[0m:<path>           saves directory as default for saving");
+        Console.WriteLine("      \u001b[36;1madd\u001b[0m:<shortcut>-<ip>  adds shortcut for given IP");
+        Console.WriteLine("      \u001b[36;1mremove\u001b[0m:<shortcut>    removes shortcut");
     }
 
     private static void Config(string[] args)

@@ -53,16 +53,19 @@ namespace LanCom
                 }
                 ip = args[1];
             }
-            /*
+          
             if (!Directory.Exists(arg) && !File.Exists(arg))
             {
                 SendText(arg);
-            }*/
-            FileAttributes attr = File.GetAttributes(arg);
-            if (attr.HasFlag(FileAttributes.Directory))
-                SendDir(arg);
+            }
             else
-                SendFile(arg);
+            {
+                FileAttributes attr = File.GetAttributes(arg);
+                if (attr.HasFlag(FileAttributes.Directory))
+                    SendDir(arg);
+                else
+                    SendFile(arg);
+            }
 
             if (StartClient() && sender is not null)
             {
@@ -103,7 +106,7 @@ namespace LanCom
             if (!StartClient() || sender is null)
                 return;
 
-            string notifyString = "9Vr3Hjqn0v:file " + msg;
+            string notifyString = "9Vr3Hjqn0v:text " + msg;
             byte[] notifyData = Encoding.UTF8.GetBytes(notifyString);
 
             sender.Send(notifyData, 0, notifyData.Length, 0);

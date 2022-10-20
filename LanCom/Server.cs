@@ -99,7 +99,7 @@ namespace LanCom
             }
             else if (notifyStr.StartsWith(temp + "text "))
             {
-                Console.WriteLine("Not implemented yet");
+                Console.WriteLine("Received text: {0}", notifyStr.Replace(temp + "text ", ""));
                 Handler.Close();
             }
             else if (notifyStr.StartsWith(temp + "end "))
