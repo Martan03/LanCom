@@ -12,10 +12,11 @@ LanCom receive
 ```
 Send text/file/folder:
 ```terminal
-LanCom send text "This is a example" <IP of computer that's receiving>
-LanCom send file example.txt <IP of a computer that's receiving>
-LanCom send dir MusicFolder <IP of a computer that's receiving>
+LanCom send <arg> <ip>
 ```
+<arg> - path to file/folder or text
+<ip> - server IP
+
 Save default values:
 If ip is set, no ip in send is needed
 You can add multiple shortcuts
