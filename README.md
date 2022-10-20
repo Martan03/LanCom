@@ -14,7 +14,7 @@ Send text/file/folder:
 ```terminal
 LanCom send <arg> <ip>
 ```
-arg - path to file/folder or text
+arg - path to file/folder or text<br />
 ip - server IP
 
 Save default values:
