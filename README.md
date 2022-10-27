@@ -10,6 +10,8 @@ Start receiving:
 ```terminal
 LanCom receive
 ```
+Creates server that will listen for connections.<br />
+Server is automatically turned off After receiving all data from a client. 
 Send text/file/folder:
 ```terminal
 LanCom send <arg> <ip>
