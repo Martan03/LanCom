@@ -11,7 +11,7 @@ Start receiving:
 LanCom receive
 ```
 Creates server that will listen for connections.<br />
-Server is automatically turned off After receiving all data from a client. 
+Server is automatically turned off after receiving all data from a client.<br />
 Send text/file/folder:
 ```terminal
 LanCom send <arg> <ip>
