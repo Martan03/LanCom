@@ -10,12 +10,16 @@ Start receiving:
 ```terminal
 LanCom receive
 ```
+Creates server that will listen for connections.<br />
+Server is automatically turned off after receiving all data from a client.
+
 Send text/file/folder:
 ```terminal
-LanCom send text "This is a example" <IP of computer that's receiving>
-LanCom send file example.txt <IP of a computer that's receiving>
-LanCom send dir MusicFolder <IP of a computer that's receiving>
+LanCom send <arg> <ip>
 ```
+arg - path to file/folder or text<br />
+ip - server IP
+
 Save default values:
 If ip is set, no ip in send is needed
 You can add multiple shortcuts
