@@ -56,9 +56,7 @@ namespace LanCom
 
           
             if (!Directory.Exists(arg) && !File.Exists(arg))
-            {
                 SendText(arg);
-            }
             else
             {
                 FileAttributes attr = File.GetAttributes(arg);
