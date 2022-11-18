@@ -35,6 +35,9 @@ public class SocketListener
             case "config":
                 Config(args.Skip(1).ToArray());
                 break;
+            case "help":
+                Help();
+                break;
             default:
                 Console.WriteLine("Invalid usage, type: LanCom help to show help!");
                 break;

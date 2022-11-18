@@ -154,9 +154,7 @@ namespace LanCom
             {
                 bytesRec = Handler.Receive(fileBytes, fileBytes.Length, 0);
                 if (bytesRec != 0)
-                {
                     bWrite.Write(fileBytes, 0, bytesRec);
-                }
             }
 
             bWrite.Close();
@@ -171,9 +169,7 @@ namespace LanCom
             foreach (var ip in host.AddressList)
             {
                 if (ip.AddressFamily == AddressFamily.InterNetwork)
-                {
                     Console.WriteLine(ip.ToString());
-                }
             }
         }
     }

@@ -32,27 +32,28 @@ namespace LanCom
         public void RunClient()
         {
             string arg = "";
-            if (args.Length == 0)
+            switch (args.Length)
             {
-                arg = "./";
-            }
-            else if (args.Length == 1)
-            {
-                if (IsIP(args[0]))
-                    ip = args[0];
-                else
+                case 0:
+                    arg = "./";
+                    break;
+                case 1:
+                    if (IsIP(args[0]))
+                        ip = args[0];
+                    else
+                        arg = args[0];
+                    break;
+                default:
                     arg = args[0];
+                    if (!IsIP(args[1]))
+                    {
+                        Console.WriteLine("{0} is not a valid IP", args[1]);
+                        return;
+                    }
+                    ip = args[1];
+                    break;
             }
-            else if (args.Length >= 2)
-            {
-                arg = args[0];
-                if (!IsIP(args[1]))
-                {
-                    Console.WriteLine("{0} is not a valid IP", args[1]);
-                    return;
-                }
-                ip = args[1];
-            }
+
           
             if (!Directory.Exists(arg) && !File.Exists(arg))
             {
@@ -67,13 +68,13 @@ namespace LanCom
                     SendFile(arg);
             }
 
-            if (StartClient() && sender is not null)
-            {
-                string notifyString = "9Vr3Hjqn0v:end ";
-                byte[] notifyData = Encoding.UTF8.GetBytes(notifyString);
+            if (!StartClient() || sender is null)
+                return;
 
-                sender.Send(notifyData, 0, notifyData.Length, 0);
-            }
+            string notifyString = "9Vr3Hjqn0v:end ";
+            byte[] notifyData = Encoding.UTF8.GetBytes(notifyString);
+
+            sender.Send(notifyData, 0, notifyData.Length, 0);
         }
 
         /// <summary>
@@ -152,14 +153,14 @@ namespace LanCom
                 sender.Receive(response);
 
                 notifyString = Encoding.UTF8.GetString(response);
-                if (notifyString.Contains("OK"))
-                {
-                    sender.Send(fileData, 0, fileData.Length, 0);
 
-                    sender.Close();
+                if (!notifyString.Contains("OK"))
+                    return;
 
-                    Console.WriteLine("File [{0}] transferred", path);
-                }
+                sender.Send(fileData, 0, fileData.Length, 0);
+                sender.Close();
+
+                Console.WriteLine("File [{0}] transferred", path);
             }
             catch (Exception e)
             {
