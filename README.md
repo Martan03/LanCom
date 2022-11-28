@@ -26,3 +26,7 @@ You can add multiple shortcuts
 ```terminal
 LanCom config ip:<Default IP> dir:<path to save files> add:<Shortcut name>-<IP> remove:<Shortcut name>
 ```
+
+Links:  
+[Author GitHub](https://github.com/Martan03)  
+[Author website](https://martan03.github.io/Portfolio/)
